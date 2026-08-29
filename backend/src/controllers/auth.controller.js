@@ -15,8 +15,9 @@ const cookieOptions = {
 async function registerUserController(req,res){
 
     const {username, email,password} = req.body
+    const normalizedEmail = email?.trim().toLowerCase()
 
-    if(!username || !email || !password){
+    if(!username || !normalizedEmail || !password){
         return res.status(400).json({
             message:"please provide username, email and password"
         })
@@ -25,7 +26,7 @@ async function registerUserController(req,res){
     const hash = await bcrypt.hash(password,10)
 const user = await userModel.create({
     username,
-    email,
+    email: normalizedEmail,
     password:hash
 })
 
@@ -50,7 +51,10 @@ res.status(201).json({
 
 async function loginUserController(req,res){
     const {email, password} = req.body
-    const user = await userModel.findOne({email})
+    const normalizedEmail = email?.trim().toLowerCase()
+    const user = normalizedEmail
+        ? await userModel.findOne({email: normalizedEmail})
+        : null
 
     if(!user){
         return res.status(400).json({
