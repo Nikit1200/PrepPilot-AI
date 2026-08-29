@@ -17,14 +17,20 @@ async function authUser(req, res, next){
         })
     }
 
-    const isTokenBlackListed = await tokenBlacklistModel.findOne({
-        token
-    })
+    try {
+        const isTokenBlackListed = await tokenBlacklistModel.findOne({
+            token
+        })
 
-    if(isTokenBlackListed){
-        return res.status(401).json({
-        message:"Token is invalid"
-    })
+        if(isTokenBlackListed){
+            return res.status(401).json({
+                message:"Token is invalid"
+            })
+        }
+    } catch (error) {
+        return res.status(500).json({
+            message:"Authentication service unavailable."
+        })
     }
 
     try{

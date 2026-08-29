@@ -1,23 +1,35 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const cors = require("cors")
+const cors = require("cors");
 
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+
 const allowedOrigins = new Set([
     "http://localhost:5173",
-    "https://careermateai-frontend.onrender.com"
+    "http://localhost:3000",
+    "https://preppilot-ai-1-mxu6.onrender.com",
+    "https://preppilot-ai-yumq.onrender.com"
 ]);
 
-app.use(cors({
+const corsOptions = {
     origin(origin, callback) {
-        if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+        if (!origin || allowedOrigins.has(origin)) {
+            return callback(null, true);
+        }
+
         return callback(new Error("Origin is not allowed by CORS"));
     },
-    credentials: true
-}));
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Cookie"],
+    optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 const authRouter = require("./routes/auth.routes")
 const interviewRouter = require("./routes/interview.routes")
