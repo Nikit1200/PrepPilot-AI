@@ -398,7 +398,7 @@ async function generatePdfFromHtml(htmlContent) {
         // GENERATE PDF
         // ==================================================
 
-        const pdfBuffer =
+        const pdfBuffer = Buffer.from(
             await page.pdf({
 
                 format: "A4",
@@ -419,7 +419,8 @@ async function generatePdfFromHtml(htmlContent) {
 
                 }
 
-            });
+            })
+        );
 
 
         console.log(
