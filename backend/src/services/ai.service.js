@@ -35,7 +35,7 @@ function makePdfSafeHtml(html) {
 
 async function generateResumeContent(prompt, responseSchema) {
     const models = [
-        process.env.RESUME_MODEL || "gemini-3-flash-preview",
+        process.env.GEMINI_MODEL || "gemini-3-flash-preview",
         "gemini-2.5-flash"
     ].filter((model, index, availableModels) => availableModels.indexOf(model) === index);
 
@@ -263,26 +263,10 @@ Make the questions relevant to the job description and candidate profile.
 `;
 
 
-        const response =
-            await ai.models.generateContent({
-
-                model: "gemini-3-flash-preview",
-
-                contents: prompt,
-
-                config: {
-
-                    responseMimeType:
-                        "application/json",
-
-                    responseSchema:
-                        zodToJsonSchema(
-                            interviewReportSchema
-                        )
-
-                }
-
-            });
+        const response = await generateResumeContent(
+            prompt,
+            zodToJsonSchema(interviewReportSchema)
+        );
 
 
         const result =
