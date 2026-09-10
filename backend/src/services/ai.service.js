@@ -33,6 +33,36 @@ function makePdfSafeHtml(html) {
         : `<!doctype html><html><head><meta charset="utf-8"></head><body>${cleaned}</body></html>`;
 }
 
+async function generateResumeContent(prompt, responseSchema) {
+    const models = [
+        process.env.RESUME_MODEL || "gemini-3-flash-preview",
+        "gemini-2.5-flash"
+    ].filter((model, index, availableModels) => availableModels.indexOf(model) === index);
+
+    for (let index = 0; index < models.length; index += 1) {
+        try {
+            return await ai.models.generateContent({
+                model: models[index],
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema
+                }
+            });
+        } catch (error) {
+            const isTemporaryFailure =
+                Number(error?.status || error?.code || error?.response?.status) === 503 ||
+                /UNAVAILABLE|high demand|temporarily unavailable/i.test(error?.message || "");
+
+            if (!isTemporaryFailure || index === models.length - 1) {
+                throw error;
+            }
+
+            console.warn(`Gemini model ${models[index]} is unavailable; trying ${models[index + 1]}.`);
+        }
+    }
+}
+
 function findLocalBrowserExecutable() {
     if (process.env.PUPPETEER_EXECUTABLE_PATH) {
         return process.env.PUPPETEER_EXECUTABLE_PATH;
@@ -636,26 +666,10 @@ The response MUST be a JSON object in this format:
         );
 
 
-        const response =
-            await ai.models.generateContent({
-
-                model: "gemini-3-flash-preview",
-
-                contents: prompt,
-
-                config: {
-
-                    responseMimeType:
-                        "application/json",
-
-                    responseSchema:
-                        zodToJsonSchema(
-                            resumePdfSchema
-                        )
-
-                }
-
-            });
+        const response = await generateResumeContent(
+            prompt,
+            zodToJsonSchema(resumePdfSchema)
+        );
 
 
         console.log(

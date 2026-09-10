@@ -20,6 +20,14 @@ function toServiceError(error, fallbackMessage) {
         });
     }
 
+    if (status === 503 || /UNAVAILABLE|high demand|temporarily unavailable/i.test(error?.message || "")) {
+        return new ServiceError("Gemini is temporarily unavailable. Please try again shortly.", {
+            status: 503,
+            code: "GEMINI_UNAVAILABLE",
+            cause: error
+        });
+    }
+
     // The request did not reach Gemini at all (DNS, firewall, proxy, or TLS failure).
     if (/fetch failed|network|ECONNRESET|ENOTFOUND|ETIMEDOUT|ECONNREFUSED/i.test(error?.message || "")) {
         return new ServiceError("Unable to reach the Gemini API. Check the server network connection and try again.", {
