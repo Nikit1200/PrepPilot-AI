@@ -35,8 +35,10 @@ function makePdfSafeHtml(html) {
 
 async function generateResumeContent(prompt, responseSchema) {
     const models = [
-        process.env.GEMINI_MODEL || "gemini-3-flash-preview",
-        "gemini-2.5-flash"
+        process.env.GEMINI_MODEL || "gemini-3.6-flash",
+        // Keep a current stable fallback when an explicitly configured model is
+        // retired or unavailable.
+        "gemini-flash-latest"
     ].filter((model, index, availableModels) => availableModels.indexOf(model) === index);
 
     for (let index = 0; index < models.length; index += 1) {
