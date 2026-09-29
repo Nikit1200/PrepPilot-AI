@@ -14,7 +14,11 @@ export const useAuth =()=>{
         const data = await login({email,password})
         localStorage.setItem("token", data.token)
         setUser(data.user)
+        return true
         } catch(err){
+        localStorage.removeItem("token")
+        setUser(null)
+        return false
         } finally {
         setLoading(false)
     }
@@ -26,7 +30,9 @@ export const useAuth =()=>{
         const data = await register({username,email,password})
         localStorage.setItem("token", data.token)
         setUser(data.user)
+        return true
         }catch(err){
+        return false
 
         } finally{
         setLoading(false)
@@ -38,7 +44,9 @@ export const useAuth =()=>{
         const data = await logout()
         localStorage.removeItem("token")
         setUser(null)
+        return true
         }catch(err){
+        return false
 
         } finally{
         setLoading(false)
@@ -47,10 +55,20 @@ export const useAuth =()=>{
 
         useEffect(()=>{
             const getAndSetUser = async()=>{
+                const token = localStorage.getItem("token")
+                if (!token) {
+                    setUser(null)
+                    setLoading(false)
+                    return
+                }
+
                 try{
                  const data = await getMe()
                 setUser(data?.user || null)
-                } catch(err){ }finally{
+                } catch(err){
+                    localStorage.removeItem("token")
+                    setUser(null)
+                }finally{
                      setLoading(false)
                 }
                
