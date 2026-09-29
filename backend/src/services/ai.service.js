@@ -36,8 +36,10 @@ function makePdfSafeHtml(html) {
 async function generateResumeContent(prompt, responseSchema) {
     const models = [
         process.env.GEMINI_MODEL || "gemini-3.8-flash",
-        // Fall back to the previous stable Flash model during temporary outages.
-        "gemini-3.6-flash"
+        // Try independent stable endpoints before returning a capacity error.
+        "gemini-3.7-flash",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash-lite"
     ].filter((model, index, availableModels) => availableModels.indexOf(model) === index);
 
     for (let index = 0; index < models.length; index += 1) {
@@ -51,15 +53,20 @@ async function generateResumeContent(prompt, responseSchema) {
                 }
             });
         } catch (error) {
+            const status = Number(error?.status || error?.code || error?.response?.status);
+            const message = error?.message || "";
             const isTemporaryFailure =
-                Number(error?.status || error?.code || error?.response?.status) === 503 ||
-                /UNAVAILABLE|high demand|temporarily unavailable/i.test(error?.message || "");
+                status === 503 ||
+                /UNAVAILABLE|high demand|temporarily unavailable/i.test(message);
+            const shouldTryAnotherModel =
+                isTemporaryFailure || status === 429 ||
+                /RESOURCE_EXHAUSTED|rate limit|quota exceeded/i.test(message);
 
-            if (!isTemporaryFailure || index === models.length - 1) {
+            if (!shouldTryAnotherModel || index === models.length - 1) {
                 throw error;
             }
 
-            console.warn(`Gemini model ${models[index]} is unavailable; trying ${models[index + 1]}.`);
+            console.warn(`Gemini model ${models[index]} failed (${status || "unknown status"}); trying ${models[index + 1]}.`);
         }
     }
 }

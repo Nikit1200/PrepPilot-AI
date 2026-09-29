@@ -23,6 +23,10 @@ export const useInterview = () => {
             setReport(response.interviewReport)
         } catch (error) {
             console.log(error)
+            window.alert(
+                error.response?.data?.message ||
+                "Unable to generate your interview plan. Please try again shortly."
+            )
         } finally {
             setLoading(false)
         }
